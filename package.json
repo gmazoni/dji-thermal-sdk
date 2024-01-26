@@ -1,0 +1,17 @@
+{
+  "name": "dji-thermal",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bindings.js",
+  "private": true,
+  "gypfile": true,
+  "scripts": {
+    "install": "node-gyp configure build",
+    "postinstall": "copyfiles -u 2 src/libs/* build/Release",
+    "start": "node ./index.js"
+  },
+  "dependencies": {
+    "copyfiles": "2.4.1",
+    "node-gyp": "10.0.1"
+  }
+}

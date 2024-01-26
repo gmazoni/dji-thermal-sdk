@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "copyfiles": "2.4.1",
-    "node-gyp": "10.0.1"
+    "node-gyp": "10.0.1",
+    "sharp": "^0.33.2"
   }
 }

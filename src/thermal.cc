@@ -6,7 +6,6 @@
 
 namespace thermal
 {
-
   using namespace v8;
 
   void Version(const FunctionCallbackInfo<Value> &args)
@@ -27,7 +26,7 @@ namespace thermal
     }
   }
 
-  void GetTiff(const FunctionCallbackInfo<Value> &args)
+  void GetTemperatureData(const FunctionCallbackInfo<Value> &args)
   {
     Isolate *isolate = args.GetIsolate();
 
@@ -81,13 +80,15 @@ namespace thermal
       return;
     }
 
-    status = dirp_set_measurement_params(*handle, params);
-    if (status != 0)
-    {
-      isolate->ThrowException(Exception::TypeError(
-          String::NewFromUtf8(isolate, "Failed to set measurement params").ToLocalChecked()));
-      return;
-    }
+    /*
+      status = dirp_set_measurement_params(*handle, params);
+      if (status != 0)
+      {
+        isolate->ThrowException(Exception::TypeError(
+            String::NewFromUtf8(isolate, "Failed to set measurement params").ToLocalChecked()));
+        return;
+      }
+    */
 
     float *temp_image = new float[resolution->width * resolution->height];
     int32_t size = resolution->width * resolution->height * sizeof(float);
@@ -112,13 +113,27 @@ namespace thermal
 
     dirp_destroy(*handle);
 
-    args.GetReturnValue().Set(arr);
+    Local<Object> parameters = Object::New(isolate);
+
+    parameters->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "distance").ToLocalChecked(), Number::New(isolate, params->distance));
+    parameters->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "humidity").ToLocalChecked(), Number::New(isolate, params->humidity));
+    parameters->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "emissivity").ToLocalChecked(), Number::New(isolate, params->emissivity));
+    parameters->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "reflection").ToLocalChecked(), Number::New(isolate, params->reflection));
+
+    Local<Object> result = Object::New(isolate);
+
+    result->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Number::New(isolate, resolution->width));
+    result->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Number::New(isolate, resolution->height));
+    result->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "parameters").ToLocalChecked(), parameters);
+    result->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "data").ToLocalChecked(), arr);
+
+    args.GetReturnValue().Set(result);
   }
 
   void Init(Local<Object> exports)
   {
     NODE_SET_METHOD(exports, "version", Version);
-    NODE_SET_METHOD(exports, "getTiff", GetTiff);
+    NODE_SET_METHOD(exports, "getTemperatureData", GetTemperatureData);
   }
 
   NODE_MODULE(NODE_GYP_MODULE_NAME, Init)

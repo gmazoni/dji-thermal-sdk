@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "copyfiles": "2.4.1",
+    "image-js": "^0.35.5",
     "node-gyp": "10.0.1",
-    "sharp": "^0.33.2"
+    "sharp": "^0.33.2",
+    "tiff": "^5.0.3"
   }
 }

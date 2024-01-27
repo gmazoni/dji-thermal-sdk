@@ -1,5 +1,5 @@
 {
-  "name": "dji-thermal",
+  "name": "dji-thermal-sdk",
   "version": "1.0.0",
   "description": "",
   "main": "bindings.js",

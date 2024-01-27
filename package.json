@@ -1,6 +1,6 @@
 {
   "name": "dji-thermal-sdk",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "",
   "main": "bindings.js",
   "gypfile": true,
@@ -31,6 +31,6 @@
     "node-gyp": "10.0.1"
   },
   "engines": {
-    "node": ">=16"
+    "node": ">=18.17.0"
   }
 }

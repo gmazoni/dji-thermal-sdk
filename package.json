@@ -3,17 +3,27 @@
   "version": "1.0.0",
   "description": "",
   "main": "bindings.js",
-  "private": true,
   "gypfile": true,
+  "author": "Guilherme Mazoni <gmazoni@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gmazoni/dji-thermal-sdk.git"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gmazoni/dji-thermal-sdk/issues"
+  },
   "scripts": {
-    "install": "node-gyp configure build",
+    "install": "node-gyp rebuild",
     "postinstall": "copyfiles -u 2 src/libs/* build/Release",
-    "start": "node ./index.js"
+    "test": "node ./test.js",
+    "publish": "npm publish --access public"
   },
   "dependencies": {
     "copyfiles": "2.4.1",
-    "node-gyp": "10.0.1",
-    "sharp": "^0.33.2",
-    "tiff": "^5.0.3"
+    "node-gyp": "10.0.1"
+  },
+  "engines": {
+    "node": ">=20.10.0"
   }
 }

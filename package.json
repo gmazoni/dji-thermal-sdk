@@ -1,6 +1,6 @@
 {
   "name": "dji-thermal-sdk",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "",
   "main": "bindings.js",
   "gypfile": true,
@@ -13,11 +13,18 @@
   "bugs": {
     "url": "https://github.com/gmazoni/dji-thermal-sdk/issues"
   },
+  "keywords": [
+    "dji",
+    "thermal",
+    "node-thermal",
+    "node-thermal-sdk",
+    "node-dji-thermal",
+    "node-dji-thermal-sdk"
+  ],
   "scripts": {
     "install": "node-gyp rebuild",
     "postinstall": "copyfiles -u 2 src/libs/* build/Release",
-    "test": "node ./test.js",
-    "publish": "npm publish --access public"
+    "test": "node ./test.js"
   },
   "dependencies": {
     "copyfiles": "2.4.1",

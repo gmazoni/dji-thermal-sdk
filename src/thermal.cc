@@ -90,10 +90,10 @@ namespace thermal
       }
     */
 
-    float *temp_image = new float[resolution->width * resolution->height];
-    int32_t size = resolution->width * resolution->height * sizeof(float);
+    int16_t *temp_image = new int16_t[resolution->width * resolution->height];
+    int32_t size = resolution->width * resolution->height * sizeof(int16_t);
 
-    status = dirp_measure_ex(*handle, temp_image, size);
+    status = dirp_measure(*handle, temp_image, size);
     if (status != 0)
     {
       isolate->ThrowException(Exception::TypeError(
@@ -101,17 +101,17 @@ namespace thermal
       return;
     }
 
+    dirp_destroy(*handle);
+
     int len = resolution->width * resolution->height;
 
-    Local<Array> arr = v8::Array::New(isolate, len);
+    Local<Uint16Array> arr = Uint16Array::New(ArrayBuffer::New(isolate, len * sizeof(int16_t)), 0, len);
     for (int i = 0; i < len; i++)
     {
       arr->Set(isolate->GetCurrentContext(), i, Number::New(isolate, temp_image[i]));
     }
 
     delete[] temp_image;
-
-    dirp_destroy(*handle);
 
     Local<Object> parameters = Object::New(isolate);
 

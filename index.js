@@ -1,29 +1,40 @@
-const { version, getTemperatureData } = require('./');
+const { version, getTemperatureData } = require("./");
 
-const sharp = require('sharp')
-const { decode } = require('tiff')
-const fs = require('fs')
+const sharp = require("sharp");
+const { decode } = require("tiff");
 
-const imageBuffer = fs.readFileSync('test.jpg')
+const fs = require("fs");
 
-console.log(imageBuffer)
+const imageBuffer = fs.readFileSync("test.jpg");
 
-console.time('version')
-console.log(version())
-console.timeEnd('version')
+console.log(imageBuffer);
 
-console.time('getTemperatureData')
-const { width, height, parameters, data } = getTemperatureData(imageBuffer)
-console.timeEnd('getTemperatureData')
+console.time("version");
+console.log("version:", version());
+console.timeEnd("version");
 
-const buffer = Buffer.from(data)
-// Create a Sharp image from the buffer
-const sharpImage = sharp(buffer, { raw: { width, height, channels: 1 } });
+console.time("getTemperatureData");
+const { width, height, parameters, data } = getTemperatureData(imageBuffer);
+console.timeEnd("getTemperatureData");
 
-sharpImage.toFile('test.tiff', (err, info) => {
-    if (err) {
-        console.error(err);
-    } else {
-        console.log('Image saved:', info);
-    }
-});
+console.log(parameters);
+
+console.log(data);
+
+const sharpImage = sharp(data, { raw: { width, height, channels: 1 } });
+
+sharpImage
+  .toColorspace("grey16")
+  .tiff({
+    compression: "none",
+  })
+  .toBuffer()
+  .then((buffer) => {
+    fs.writeFileSync("test.tiff", buffer);
+
+    const tiffBuffer = fs.readFileSync("test.tiff");
+
+    const [image] = decode(tiffBuffer);
+
+    console.log(image.data);
+  });

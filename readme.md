@@ -37,6 +37,45 @@ so the real temperature is the array element divided by 10. eg: 1234 means 123.4
 */
 ```
 
+## Example
+
+Extract the temperature data from the R-JPEG image, use [sharp](https://www.npmjs.com/package/sharp) package to generate a UInt16 TIFF image, and then decode the TIFF image using [tiff](https://www.npmjs.com/package/tiff) package.
+
+```javascript
+const { getTemperatureData } = require("dji-thermal-sdk");
+const sharp = require("sharp");
+const { decode } = require("tiff");
+const fs = require("fs");
+
+const imageBuffer = fs.readFileSync("DJI_0001_R.jpg");
+
+const { width, height, parameters, data } = getTemperatureData(imageBuffer);
+
+console.log(parameters);
+
+console.log(data);
+
+//create a sharp image from the temperature data
+// /sharp accepts raw image data (Uint16Array), so we need to specify the width, height and channels of the image.
+const sharpImage = sharp(data, { raw: { width, height, channels: 1 } }); 
+
+sharpImage
+  .toColorspace("grey16") //convert the image to 16-bit grayscale (1 channel)
+  .tiff({
+    compression: "none", //no compression
+  })
+  .toBuffer() //get the buffer of the TIFF image
+  .then((buffer) => {
+    fs.writeFileSync("test.tiff", buffer); //write the buffer to a file
+ 
+    const tiffBuffer = fs.readFileSync("test.tiff"); //read the TIFF image from the file
+
+    const [image] = decode(tiffBuffer); //decode the TIFF image
+
+    console.log(image.data); //print the temperature data of the TIFF image
+  });
+```
+
 ## TODO
 
 - Support `Windows` platforms.

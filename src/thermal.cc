@@ -11,9 +11,8 @@ namespace thermal
   class AddonData
   {
   public:
-    AddonData(Isolate *isolate, Local<Object> exports)
+    AddonData(Isolate *isolate, Local<Object> exports) : isolate(isolate)
     {
-      this->isolate = isolate;
       this->exports.Reset(isolate, exports);
     }
 
@@ -29,14 +28,12 @@ namespace thermal
   void Version(const FunctionCallbackInfo<Value> &args)
   {
     AddonData *data = reinterpret_cast<AddonData *>(args.Data().As<External>()->Value());
+    auto isolate = data->isolate;
 
-    dirp_api_version_t *versionPointer = new dirp_api_version_t;
-
-    int32_t status = dirp_get_api_version(versionPointer);
-
-    if (status == 0)
+    dirp_api_version_t version;
+    if (dirp_get_api_version(&version) == 0)
     {
-      args.GetReturnValue().Set(String::NewFromUtf8(data->isolate, versionPointer->magic).ToLocalChecked());
+      args.GetReturnValue().Set(String::NewFromUtf8(isolate, version.magic).ToLocalChecked());
     }
     else
     {
@@ -47,19 +44,12 @@ namespace thermal
   void GetTemperatureData(const FunctionCallbackInfo<Value> &args)
   {
     AddonData *data = reinterpret_cast<AddonData *>(args.Data().As<External>()->Value());
+    auto isolate = data->isolate;
 
-    if (args.Length() != 1)
+    if (args.Length() != 1 || !node::Buffer::HasInstance(args[0]))
     {
-      data->isolate->ThrowException(Exception::TypeError(
-          String::NewFromUtf8(data->isolate, "Wrong number of arguments").ToLocalChecked()));
-      return;
-    }
-
-    // must be a js buffer
-    if (!node::Buffer::HasInstance(args[0]))
-    {
-      data->isolate->ThrowException(Exception::TypeError(
-          String::NewFromUtf8(data->isolate, "First argument must be a Buffer").ToLocalChecked()));
+      isolate->ThrowException(Exception::TypeError(
+          String::NewFromUtf8(isolate, "Wrong number of arguments or first argument must be a Buffer").ToLocalChecked()));
       return;
     }
 
@@ -73,8 +63,8 @@ namespace thermal
     int32_t status = dirp_create_from_rjpeg(bufferData, bufferLength, handle);
     if (status != 0)
     {
-      data->isolate->ThrowException(Exception::TypeError(
-          String::NewFromUtf8(data->isolate, "Failed to create DIRP handle").ToLocalChecked()));
+      isolate->ThrowException(Exception::TypeError(
+          String::NewFromUtf8(isolate, "Failed to create DIRP handle").ToLocalChecked()));
       return;
     }
 
@@ -83,8 +73,8 @@ namespace thermal
     status = dirp_get_rjpeg_resolution(*handle, resolution);
     if (status != 0)
     {
-      data->isolate->ThrowException(Exception::TypeError(
-          String::NewFromUtf8(data->isolate, "Failed to get resolution").ToLocalChecked()));
+      isolate->ThrowException(Exception::TypeError(
+          String::NewFromUtf8(isolate, "Failed to get resolution").ToLocalChecked()));
       return;
     }
 
@@ -93,8 +83,8 @@ namespace thermal
     status = dirp_get_measurement_params(*handle, params);
     if (status != 0)
     {
-      data->isolate->ThrowException(Exception::TypeError(
-          String::NewFromUtf8(data->isolate, "Failed to get measurement params").ToLocalChecked()));
+      isolate->ThrowException(Exception::TypeError(
+          String::NewFromUtf8(isolate, "Failed to get measurement params").ToLocalChecked()));
       return;
     }
 
@@ -102,8 +92,8 @@ namespace thermal
       status = dirp_set_measurement_params(*handle, params);
       if (status != 0)
       {
-        data->isolate->ThrowException(Exception::TypeError(
-            String::NewFromUtf8(data->isolate, "Failed to set measurement params").ToLocalChecked()));
+        isolate->ThrowException(Exception::TypeError(
+            String::NewFromUtf8(isolate, "Failed to set measurement params").ToLocalChecked()));
         return;
       }
     */
@@ -114,8 +104,8 @@ namespace thermal
     status = dirp_measure(*handle, temp_image, size);
     if (status != 0)
     {
-      data->isolate->ThrowException(Exception::TypeError(
-          String::NewFromUtf8(data->isolate, "Failed to measure").ToLocalChecked()));
+      isolate->ThrowException(Exception::TypeError(
+          String::NewFromUtf8(isolate, "Failed to measure").ToLocalChecked()));
       return;
     }
 
@@ -123,27 +113,27 @@ namespace thermal
 
     int len = resolution->width * resolution->height;
 
-    Local<Uint16Array> arr = Uint16Array::New(ArrayBuffer::New(data->isolate, len * sizeof(int16_t)), 0, len);
+    Local<Uint16Array> arr = Uint16Array::New(ArrayBuffer::New(isolate, len * sizeof(int16_t)), 0, len);
     for (int i = 0; i < len; i++)
     {
-      arr->Set(data->isolate->GetCurrentContext(), i, Number::New(data->isolate, temp_image[i]));
+      arr->Set(isolate->GetCurrentContext(), i, Number::New(isolate, temp_image[i]));
     }
 
     delete[] temp_image;
 
-    Local<Object> parameters = Object::New(data->isolate);
+    Local<Object> parameters = Object::New(isolate);
 
-    parameters->Set(data->isolate->GetCurrentContext(), String::NewFromUtf8(data->isolate, "distance").ToLocalChecked(), Number::New(data->isolate, params->distance));
-    parameters->Set(data->isolate->GetCurrentContext(), String::NewFromUtf8(data->isolate, "humidity").ToLocalChecked(), Number::New(data->isolate, params->humidity));
-    parameters->Set(data->isolate->GetCurrentContext(), String::NewFromUtf8(data->isolate, "emissivity").ToLocalChecked(), Number::New(data->isolate, params->emissivity));
-    parameters->Set(data->isolate->GetCurrentContext(), String::NewFromUtf8(data->isolate, "reflection").ToLocalChecked(), Number::New(data->isolate, params->reflection));
+    parameters->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "distance").ToLocalChecked(), Number::New(isolate, params->distance));
+    parameters->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "humidity").ToLocalChecked(), Number::New(isolate, params->humidity));
+    parameters->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "emissivity").ToLocalChecked(), Number::New(isolate, params->emissivity));
+    parameters->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "reflection").ToLocalChecked(), Number::New(isolate, params->reflection));
 
-    Local<Object> result = Object::New(data->isolate);
+    Local<Object> result = Object::New(isolate);
 
-    result->Set(data->isolate->GetCurrentContext(), String::NewFromUtf8(data->isolate, "width").ToLocalChecked(), Number::New(data->isolate, resolution->width));
-    result->Set(data->isolate->GetCurrentContext(), String::NewFromUtf8(data->isolate, "height").ToLocalChecked(), Number::New(data->isolate, resolution->height));
-    result->Set(data->isolate->GetCurrentContext(), String::NewFromUtf8(data->isolate, "parameters").ToLocalChecked(), parameters);
-    result->Set(data->isolate->GetCurrentContext(), String::NewFromUtf8(data->isolate, "data").ToLocalChecked(), arr);
+    result->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "width").ToLocalChecked(), Number::New(isolate, resolution->width));
+    result->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "height").ToLocalChecked(), Number::New(isolate, resolution->height));
+    result->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "parameters").ToLocalChecked(), parameters);
+    result->Set(isolate->GetCurrentContext(), String::NewFromUtf8(isolate, "data").ToLocalChecked(), arr);
 
     args.GetReturnValue().Set(result);
   }
